@@ -1,0 +1,8 @@
+{
+    "items": [
+        { "name": "6_8", "x": 6, "y": 8 }
+    ],
+    "size_x": 1,
+    "size_y": 1,
+    "tile_size": 32
+}
