@@ -106,9 +106,32 @@ function createScene(canvas) {
     controls.update();
     scene.add(camera);
 
+    
+    // ambientLight = new THREE.AmbientLight ( 0xc1bfbf);
+    ambientLight = new THREE.AmbientLight ( 0xffffff);
+    scene.add(ambientLight);
+    loadBlock();
+
+
 }
 
 function createObjects(){
 
 }
 
+function loadBlock() {
+    var material = new THREE.MeshBasicMaterial( {color: 0xdddddd, wireframe: true ,side: THREE.DoubleSide} );
+    var geometry = new THREE.PlaneGeometry(60, 60, 255, 255);
+    $.getJSON('objects/terrainHeights.json',function (data) {
+        console.log(geometry.vertices.length);
+            var index = 0;
+            for (let i = 0; i < data.length; i++) {
+                for (let j = 0; j < data[i].length; j++) {
+                    geometry.vertices[index].z = data[i][j] / 65535 * 10;
+                    index++;
+                }
+            }
+            var plane = new THREE.Mesh(geometry, material);
+            scene.add(plane);
+    });
+}
