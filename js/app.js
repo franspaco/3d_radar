@@ -22,6 +22,8 @@ APP.setup = async function () {
 
     // Create materials
     await APP.createMaterials();
+    // Load airplane object
+    await AIRPLANES.setup();
 
     // Setup scene
     this.camera = new THREE.PerspectiveCamera(
@@ -75,6 +77,11 @@ APP.createObjects = async function(){
         var Z = scaling*(item.y - y_offset);
         tile.position.set(X, 0, Z);
     }
+    // Temp ambient light
+    ambientLight = new THREE.AmbientLight ( 0xffffff);
+    this.scene.add(ambientLight);
+    this.scene.add(AIRPLANES.getNew());
+
     console.log('woop');
 }
 
