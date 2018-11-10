@@ -14,7 +14,7 @@ AIRPLANES.setup = async function(){
 
         setInterval(()=>{
             AIRPLANES.updateData();
-        }, 10000);
+        }, 1000 * 10);
     });
 }
 
@@ -31,12 +31,33 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
 
     if(this.previouslySeen(airplaneId)){
         // Lat, Long
+        
+        // WARINING: This can break if timeout deletes airplane at same time
+        AIRPLANES.data[airplaneId]['lastseen'] = new Date();
         AIRPLANES.data[airplaneId]['info'] = airplaneInfo;
         AIRPLANES.data[airplaneId]['airplane'].position.x += 10;
-    }else{
-        var airplane = AIRPLANES.getNew();
-        AIRPLANES.data[airplaneId] = {info : airplaneInfo, airplane: airplane};
+        
     }
+    else{
+        var airplane = AIRPLANES.getNew();
+        AIRPLANES.data[airplaneId] = {info : airplaneInfo, airplane: airplane, lastseen: new Date()};
+        // Check if airplane is alive after 2 minutes
+        this.setAlive(airplaneId);
+    }
+}
+AIRPLANES.setAlive = function(airplaneId){
+    setTimeout(()=>{
+        this.checkAlive(airplaneId);
+    }, 2000 * 60);
+}
+
+AIRPLANES.checkAlive = function(airplaneId){
+    // If 2 minutes have passed since last seen airplane, delete from data. Else, check again in 2 minues
+    if((new Date() - AIRPLANES.data[airplaneId]['lastseen'])/60000 > 2){
+        delete AIRPLANES.data[airplaneId];
+    }
+    else this.setAlive(airplaneId);
+    
 }
 
 // Should be called every 10 sec.
