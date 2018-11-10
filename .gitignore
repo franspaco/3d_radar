@@ -329,5 +329,8 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 
-
+# Node.js
 package-lock.json
+
+# Macos
+.DS_Store
