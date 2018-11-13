@@ -146,7 +146,7 @@ AIRPLANES.remove_old = function(){
     var now = new Date();
     for (const airplaneId in AIRPLANES.data) {
         if (AIRPLANES.data.hasOwnProperty(airplaneId)) {
-            if(!this.checkAlive(airplaneId, now, 0.5)){
+            if(!this.checkAlive(airplaneId, now, 1.5)){
                 console.log('Not alive: ' + airplaneId);
                 APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
                 // TODO: (?) remove trails

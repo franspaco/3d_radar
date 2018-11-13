@@ -8,7 +8,7 @@ var APP = {
         // height_scaling: 10/18, // Real
         height_scaling: 1.3,
         tile_scaling: 10,
-        max_trail_length: 200,
+        max_trail_length: 600,
     }
 }
 console.log(APP);
