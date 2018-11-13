@@ -1,7 +1,16 @@
 /// <reference path="../types/three/index.d.ts" />
 
-var APP = {}
-
+var APP = {
+    constants: {
+        range_long : {a: -100.546875, b: -97.55859375},
+        range_lat : {a: 20.79720143430699, b: 17.97873309555617},
+        range_map : {a: 85, b: -85},
+        // height_scaling: 10/18, // Real
+        height_scaling: 1.3,
+        tile_scaling: 10
+    }
+}
+console.log(APP);
 APP.setup = async function () {
     this.canvas = document.getElementById("webglcanvas");
     var container = $("#container");
@@ -65,13 +74,13 @@ APP.createObjects = async function(){
     var x_offset = Math.floor(data.size_x/2);
     var y_offset = Math.floor(data.size_y/2);
     var loader = new THREE.TextureLoader();
-    var scaling = 10;
+    var scaling = APP.constants.tile_scaling;
     for (let index = 0; index < data.items.length; index++) {
         const item = data.items[index];
         var material = new THREE.MeshBasicMaterial({
             map: THREE.ImageUtils.loadTexture('mapdata/images/' + item.name + '_texture.png')
         });
-        var tile = makeTile(elevation[item.x + "_" + item.y], data.tile_size, material, scaling, 1.5);
+        var tile = makeTile(elevation[item.x + "_" + item.y], data.tile_size, material, scaling, APP.constants.height_scaling);
         this.scene.add(tile);
         var X = scaling*(item.x - x_offset);
         var Z = scaling*(item.y - y_offset);
@@ -80,7 +89,6 @@ APP.createObjects = async function(){
     // Temp ambient light
     ambientLight = new THREE.AmbientLight ( 0xffffff);
     this.scene.add(ambientLight);
-    this.scene.add(AIRPLANES.getNew());
 
     console.log('woop');
 }
