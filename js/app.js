@@ -7,7 +7,8 @@ var APP = {
         range_map : {a: 85, b: -85},
         // height_scaling: 10/18, // Real
         height_scaling: 1.3,
-        tile_scaling: 10
+        tile_scaling: 10,
+        max_trail_length: 200,
     }
 }
 console.log(APP);
@@ -27,7 +28,7 @@ APP.setup = async function () {
 
     // Create a new Three.js scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0.0, 0.0, 0.0);
+    this.scene.background = new THREE.Color(0x7EC0EE);
 
     // Create materials
     await APP.createMaterials();
@@ -42,6 +43,7 @@ APP.setup = async function () {
         4000
     );
     this.controls = new THREE.OrbitControls(this.camera, this.canvas);
+    this.controls.maxPolarAngle = Math.PI/2-0.1;
     this.camera.position.set(0, 10, 10);
     this.controls.update();
     this.scene.add(this.camera);
@@ -66,9 +68,15 @@ APP.tick = function(){
 
 APP.createMaterials = async function(){
     this.materials = {};
+    this.materials['background'] = new THREE.MeshBasicMaterial({color: 0x032602, side: THREE.DoubleSide});
+    this.materials.line = new THREE.LineBasicMaterial({color:0xffff00});
 }
 
 APP.createObjects = async function(){
+    var backgroundPlane = new THREE.Mesh(new THREE.PlaneGeometry(500, 500, 1, 1), this.materials['background']);
+    backgroundPlane.rotateX(deg2rad(-90));
+    this.scene.add(backgroundPlane);
+
     var data = await loadJsonAsync('mapdata/map_meta.json');
     var elevation = await loadJsonAsync('mapdata/elevations.json');
     var x_offset = Math.floor(data.size_x/2);
@@ -78,7 +86,8 @@ APP.createObjects = async function(){
     for (let index = 0; index < data.items.length; index++) {
         const item = data.items[index];
         var material = new THREE.MeshBasicMaterial({
-            map: THREE.ImageUtils.loadTexture('mapdata/images/' + item.name + '_texture.png')
+            map: THREE.ImageUtils.loadTexture('mapdata/images/' + item.name + '_texture.png'),
+            color: 0x999999
         });
         var tile = makeTile(elevation[item.x + "_" + item.y], data.tile_size, material, scaling, APP.constants.height_scaling);
         this.scene.add(tile);
@@ -89,8 +98,6 @@ APP.createObjects = async function(){
     // Temp ambient light
     ambientLight = new THREE.AmbientLight ( 0xffffff);
     this.scene.add(ambientLight);
-
-    console.log('woop');
 }
 
 APP.update = function(){}
