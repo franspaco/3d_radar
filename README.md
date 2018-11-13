@@ -1,5 +1,8 @@
 # computer-graphics-final
 
+[VIEW LIVE](https://javicuriel.github.io/computer-graphics-final/)
+
+
 To start app:
 1. Install request module for Node
 ```
