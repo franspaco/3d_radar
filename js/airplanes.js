@@ -14,6 +14,7 @@ var AIRPLANES = {
 AIRPLANES.setup = async function(){
     var loader = new THREE.FBXLoader();
     AIRPLANES.mainAirplane = await loader.asyncLoad('objects/Boeing_787/B_787_8.fbx');
+    // AIRPLANES.mainAirplane = await loader.asyncLoad('objects/Boeing_787/787_no_gear_2.fbx');
     AIRPLANES.mainAirplane.scale.multiplyScalar(0.0002);
 
     console.log(AIRPLANES.mainAirplane);
@@ -30,30 +31,6 @@ AIRPLANES.setup = async function(){
     setInterval(()=>{
         AIRPLANES.updateData();
     }, 1000 * 3);
-
-    // loader.load( 'objects/Boeing_787/B_787_8.fbx', function ( airplane ){
-    //     // airplane.scale.set(.0001,.0001,.0001);
-    //     airplane.scale.multiplyScalar(0.0005)
-    //     // airplane.scale.set(.001,.001,.001);
-    //     // airplane.position.y += 10;
-        
-    //     AIRPLANES.mainAirplane = airplane;
-        
-    //     AIRPLANES.updateData();
-
-    //     setInterval(()=>{
-    //         AIRPLANES.updateData();
-    //     }, 1000 * 3);
-    // });
-    // console.log(this.transformCoordinates(-99.052734375, 19.38796726493158, 0));
-    // var pos = this.transformCoordinates(-99.136610, 19.784679, 0);
-    // console.log(pos);
-    // var lol = new THREE.Mesh(new THREE.SphereGeometry(2, 10, 10), new THREE.MeshBasicMaterial({color:0xffffff}))
-    // APP.scene.add(lol);
-    // lol.position.x = pos.x;
-    // lol.position.z = pos.z;
-    // lol.position.y = 1;
-
 }
 
 AIRPLANES.getNew = function(){
@@ -68,9 +45,12 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
     airplaneId = airplaneInfo['Id'];
 
     if(this.previouslySeen(airplaneId)){
-        // WARINING: This can break if timeout deletes airplane at same time
+        // Update last seen
         AIRPLANES.data[airplaneId]['lastseen'] = new Date();
-        AIRPLANES.data[airplaneId]['info'] = airplaneInfo;        
+        // Update aircraft info
+        AIRPLANES.data[airplaneId]['info'] = airplaneInfo;
+        // Set status to alive (revives any removed airplanes still in memory)
+        AIRPLANES.data[airplaneId].status = 'alive';
     }
     else{
         var airplane = AIRPLANES.getNew();
@@ -86,7 +66,8 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
             airplane: airplane,
             lastseen: new Date(),
             trail: trail,
-            trailLength: 0
+            trailLength: 0,
+            status: 'alive'
         };
         APP.scene.add(airplane);
         APP.scene.add(trail);
@@ -145,12 +126,26 @@ AIRPLANES.checkAlive = function(airplaneId, timestamp, mins_limit){
 AIRPLANES.remove_old = function(){
     var now = new Date();
     for (const airplaneId in AIRPLANES.data) {
-        if (AIRPLANES.data.hasOwnProperty(airplaneId)) {
+        if (AIRPLANES.data.hasOwnProperty(airplaneId) && AIRPLANES.data[airplaneId].status == 'alive') {
+            // Check if we haven't received anything in the last 1.5 minutes
             if(!this.checkAlive(airplaneId, now, 1.5)){
-                console.log('Not alive: ' + airplaneId);
-                APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
-                // TODO: (?) remove trails
-                delete AIRPLANES.data[airplaneId];
+                // Check if we haven't received anything in the last 5 minutes
+                if(!this.checkAlive(airplaneId, now, 5)){
+                    // If we haven't seen it in >5 minutes delete all data
+                    console.log('Erasing: ' + AIRPLANES.data[airplaneId].info.Icao);
+                    // Remove the trail
+                    APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
+                    // Delete all remaining data
+                    delete AIRPLANES.data[airplaneId];
+                }
+                else {
+                    console.log('Hiding: ' + AIRPLANES.data[airplaneId].info.Icao);
+                    // Remove the airplane model
+                    APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
+                    // Trail is left in the scene until permanent removal
+                    // Set status to removed
+                    AIRPLANES.data[airplaneId].status = 'removed';
+                }
             }
         }
     }
