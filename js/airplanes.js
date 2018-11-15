@@ -126,6 +126,7 @@ AIRPLANES.checkAlive = function(airplaneId, timestamp, mins_limit){
 AIRPLANES.remove_old = function(){
     var now = new Date();
     for (const airplaneId in AIRPLANES.data) {
+        // TODO: Aircraft data not being deleted
         if (AIRPLANES.data.hasOwnProperty(airplaneId) && AIRPLANES.data[airplaneId].status == 'alive') {
             // Check if we haven't received anything in the last 1.5 minutes
             if(!this.checkAlive(airplaneId, now, 1.5)){
@@ -151,7 +152,6 @@ AIRPLANES.remove_old = function(){
     }
 }
 
-// Should be called every 10 sec.
 AIRPLANES.updateData = function(){
     $.getJSON(this.apiRoute,(data)=>{
         data.acList.forEach(airplaneInfo => {

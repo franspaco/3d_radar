@@ -59,11 +59,14 @@ APP.setup = async function () {
 
 APP.tick = function(){
     window.requestAnimationFrame(this.tick);
+    var now = Date.now();
+    var delta = now - this.lastUpdate;
+    this.lastUpdate = now;
     // Render the scene
     this.renderer.render(this.scene, this.camera);
     // Update the camera controller
     this.controls.update();
-    this.update();
+    this.update(delta);
 }.bind(APP);
 
 APP.createMaterials = async function(){
@@ -100,4 +103,16 @@ APP.createObjects = async function(){
     this.scene.add(ambientLight);
 }
 
-APP.update = function(){}
+APP.update = function(delta){
+    for (const airplaneId in AIRPLANES.data) {
+        if (AIRPLANES.data.hasOwnProperty(airplaneId)){
+            var airplane = AIRPLANES.data[airplaneId].airplane;
+            var spd = AIRPLANES.data[airplaneId].info.Spd;
+            var vspd = AIRPLANES.data[airplaneId].info.Vsi;
+            var hdg = deg2rad(AIRPLANES.data[airplaneId].info.Trak-90);
+            airplane.position.x += spd *1.852*0.000277778*0.5418*delta/1000*Math.cos(hdg);
+            airplane.position.z += spd *1.852*0.000277778*0.5418*delta/1000*Math.sin(hdg);
+            airplane.position.y += vspd/60*0.0003048*APP.constants.height_scaling*delta/1000;
+        }
+    }
+}
