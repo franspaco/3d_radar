@@ -73,6 +73,8 @@ APP.createMaterials = async function(){
     this.materials = {};
     this.materials['background'] = new THREE.MeshBasicMaterial({color: 0x032602, side: THREE.DoubleSide});
     this.materials.line = new THREE.LineBasicMaterial({color:0xffff00});
+    this.materials.line_from = new THREE.LineBasicMaterial({color:0x00ff00});
+    this.materials.line_to = new THREE.LineBasicMaterial({color:0x00ffff});
 }
 
 APP.createObjects = async function(){
@@ -115,4 +117,5 @@ APP.update = function(delta){
             airplane.position.y += vspd/60*0.0003048*APP.constants.height_scaling*delta/1000;
         }
     }
+    
 }
