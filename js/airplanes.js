@@ -34,7 +34,8 @@ AIRPLANES.setup = async function(){
 }
 
 AIRPLANES.getNew = function(){
-    return this.mainAirplane.clone();
+    // return this.mainAirplane.clone();
+    return cloneFBX(this.mainAirplane);
 }
 
 AIRPLANES.previouslySeen = function(airplaneId){
@@ -58,7 +59,14 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         var positions = new Float32Array( APP.constants.max_trail_length * 3 );
         geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
         geometry.setDrawRange( 0, 0 );
-        var trail = new THREE.Line(geometry, APP.materials.line);
+        var material = APP.materials.line;
+        if(airplaneInfo.To && airplaneInfo.To.startsWith("MMMX")){
+            material = APP.materials.line_to;
+        }
+        else if(airplaneInfo.From && airplaneInfo.From.startsWith("MMMX")){
+            material = APP.materials.line_from;
+        }
+        var trail = new THREE.Line(geometry, material);
 
         airplane.name = airplaneId;
         AIRPLANES.data[airplaneId] = {
@@ -126,27 +134,24 @@ AIRPLANES.checkAlive = function(airplaneId, timestamp, mins_limit){
 AIRPLANES.remove_old = function(){
     var now = new Date();
     for (const airplaneId in AIRPLANES.data) {
-        // TODO: Aircraft data not being deleted
         if (AIRPLANES.data.hasOwnProperty(airplaneId) && AIRPLANES.data[airplaneId].status == 'alive') {
-            // Check if we haven't received anything in the last 1.5 minutes
-            if(!this.checkAlive(airplaneId, now, 1.5)){
-                // Check if we haven't received anything in the last 5 minutes
-                if(!this.checkAlive(airplaneId, now, 5)){
-                    // If we haven't seen it in >5 minutes delete all data
-                    console.log('Erasing: ' + AIRPLANES.data[airplaneId].info.Icao);
-                    // Remove the trail
-                    APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
-                    // Delete all remaining data
-                    delete AIRPLANES.data[airplaneId];
-                }
-                else {
-                    console.log('Hiding: ' + AIRPLANES.data[airplaneId].info.Icao);
+            // Check if alive and we haven't received anything in the last 1.5 minutes
+            if(AIRPLANES.data[airplaneId].status == 'alive' && !this.checkAlive(airplaneId, now, 1.5)) {
+                console.log('Hiding: ' + AIRPLANES.data[airplaneId].info.Icao);
                     // Remove the airplane model
                     APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
                     // Trail is left in the scene until permanent removal
                     // Set status to removed
                     AIRPLANES.data[airplaneId].status = 'removed';
-                }
+            }
+            // Check if removed and we haven't received anything in the last 5 minutes
+            else if(AIRPLANES.data[airplaneId].status == 'removed' && !this.checkAlive(airplaneId, now, 5)){
+                // If we haven't seen it in >5 minutes delete all data
+                console.log('Erasing: ' + AIRPLANES.data[airplaneId].info.Icao);
+                // Remove the trail
+                APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
+                // Delete all remaining data
+                delete AIRPLANES.data[airplaneId];
             }
         }
     }
