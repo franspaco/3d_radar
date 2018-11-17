@@ -14,3 +14,16 @@ async function loadJsonAsync(url) {
         $.getJSON(url, resolve);
     });
 }
+
+function default_value(value){
+    return (value !== undefined)? value : "";
+}
+
+function get_route(from, to){
+    if( from !== undefined && to !== undefined){
+        return from.substring(0, 4) + '-' + to.substring(0, 4);
+    }
+    else{
+        return '';
+    }
+}

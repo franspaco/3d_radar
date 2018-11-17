@@ -13,10 +13,12 @@ var APP = {
 }
 console.log(APP);
 APP.setup = async function () {
+    this.tag = $("#tag");
     this.canvas = document.getElementById("webglcanvas");
     var container = $("#container");
     this.canvas.width = container.width();
     this.canvas.height = container.height();
+    this.canvas_bounds = this.canvas.getBoundingClientRect();
 
     // Create the Three.js renderer and attach it to our canvas
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
@@ -51,10 +53,40 @@ APP.setup = async function () {
     // Create objects
     this.createObjects();
 
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
+    this.canvas.addEventListener( 'mousemove', this.onMouseMove );
+    this.canvas.addEventListener( 'click', this.onMouseClick );
+
     console.log('Render');
-    
     APP.lastUpdate = Date.now();
     window.requestAnimationFrame(this.tick);
+
+    // Set up data table
+    this.table = $("#data").DataTable({
+        "scrollY":        "50%",
+        "scrollCollapse": true,
+        "paging":         false,
+        "columnDefs": [
+            {
+                "targets": 0,
+                "visible": false
+            }
+        ]
+    });
+    // Handle table select logic
+    $('#data tbody').on( 'click', 'tr', function () {
+        if ( $(this).hasClass('selected') ) {
+            $(this).removeClass('selected');
+            AIRPLANES.setSelected(null);
+        }
+        else {
+            APP.table.$('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+            var id = APP.table.row(this).data()[0];
+            AIRPLANES.setSelected(id);
+        }
+    });
 }
 
 APP.tick = function(){
@@ -117,5 +149,54 @@ APP.update = function(delta){
             airplane.position.y += vspd/60*0.0003048*APP.constants.height_scaling*delta/1000;
         }
     }
-    
 }
+
+
+APP.onMouseMove = function(event) {
+    event.preventDefault();
+    this.mouse.x = (event.clientX-this.canvas_bounds.left)/this.canvas.width  * 2 - 1;
+    this.mouse.y = -(event.clientY-this.canvas_bounds.top )/this.canvas.height * 2 + 1;
+    this.raycaster.setFromCamera( this.mouse, this.camera );
+    var showTag = false;
+    for (const key in AIRPLANES.data) {
+        if (AIRPLANES.data.hasOwnProperty(key)) {
+            var intersects = this.raycaster.intersectObject(AIRPLANES.data[key].airplane, true);
+            if(intersects.length > 0){
+                this.selected_aircraft = key;
+                if(AIRPLANES.data[key].info.Call){
+                    this.tag.text(AIRPLANES.data[key].info.Call);
+                }
+                else {
+                    this.tag.text(AIRPLANES.data[key].info.Icao);
+                }
+                showTag = true;
+                break;
+            }
+        }
+    }
+    if(showTag){
+        this.tag.removeClass('hidden');
+        this.tag.css({
+            top:  event.clientY-20 + 'px',
+            left: event.clientX + 'px'
+        });
+    }
+    else {
+        this.tag.addClass('hidden');
+        this.selected_aircraft = null;
+    }
+}.bind(APP);
+
+APP.onMouseClick = function(event) {
+    event.preventDefault();
+    if(this.selected_aircraft != null){
+        this.table.$('tr.selected').removeClass('selected');
+        this.table.$(AIRPLANES.data[this.selected_aircraft].node).addClass('selected');
+        AIRPLANES.setSelected(this.selected_aircraft);
+    }
+    else{
+        // this.table.search('').draw();
+        AIRPLANES.setSelected(null);
+        this.table.$('tr.selected').removeClass('selected');
+    }
+}.bind(APP);

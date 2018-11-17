@@ -7,6 +7,7 @@ var AIRPLANES = {
     apiRoute : "https://franspaco.azurewebsites.net/airplanes", 
     // Airplane Object, later copied
     mainAirplane : null,
+    selected: null,
 };
 
 
@@ -35,7 +36,7 @@ AIRPLANES.setup = async function(){
 
 AIRPLANES.getNew = function(){
     // return this.mainAirplane.clone();
-    return cloneFBX(this.mainAirplane);
+    return cloneFbx(this.mainAirplane);
 }
 
 AIRPLANES.previouslySeen = function(airplaneId){
@@ -51,7 +52,11 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         // Update aircraft info
         AIRPLANES.data[airplaneId]['info'] = airplaneInfo;
         // Set status to alive (revives any removed airplanes still in memory)
-        AIRPLANES.data[airplaneId].status = 'alive';
+        if(AIRPLANES.data[airplaneId].status == 'removed'){
+            AIRPLANES.data[airplaneId].status = 'alive';
+            APP.scene.add(AIRPLANES.data[airplaneId].airplane);
+        }
+        
     }
     else{
         var airplane = AIRPLANES.getNew();
@@ -68,6 +73,15 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         }
         var trail = new THREE.Line(geometry, material);
 
+        var table_data = [
+            airplaneId,
+            default_value(airplaneInfo.Icao),
+            default_value(airplaneInfo.Call),
+            default_value(airplaneInfo.Reg),
+            default_value(airplaneInfo.Type),
+            get_route(airplaneInfo.From, airplaneInfo.To)
+        ];
+
         airplane.name = airplaneId;
         AIRPLANES.data[airplaneId] = {
             info : airplaneInfo,
@@ -75,10 +89,13 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
             lastseen: new Date(),
             trail: trail,
             trailLength: 0,
-            status: 'alive'
+            status: 'alive',
+            table_data: table_data
         };
         APP.scene.add(airplane);
         APP.scene.add(trail);
+
+        AIRPLANES.data[airplaneId].node = APP.table.row.add(table_data).draw(false).node();
     }
     
     if(airplaneInfo['Long'] && airplaneInfo['Lat'] && airplaneInfo['Alt']){
@@ -143,6 +160,9 @@ AIRPLANES.remove_old = function(){
                     // Trail is left in the scene until permanent removal
                     // Set status to removed
                     AIRPLANES.data[airplaneId].status = 'removed';
+
+                    //
+                    APP.table.row(AIRPLANES.data[airplaneId].status.node).remove().draw(false);
             }
             // Check if removed and we haven't received anything in the last 5 minutes
             else if(AIRPLANES.data[airplaneId].status == 'removed' && !this.checkAlive(airplaneId, now, 5)){
@@ -165,4 +185,23 @@ AIRPLANES.updateData = function(){
     });
     this.remove_old();
 }
+
+AIRPLANES.setSelected = function(id){
+    console.log('Selected: ' + id);
+    if(this.selected != null && AIRPLANES.data.hasOwnProperty(this.selected)){
+        AIRPLANES.data[this.selected].airplane.traverse((child) => {
+            if(child.isMesh){
+                child.material.color.setHex(0xff0000);
+            }
+        });
+    }
+    this.selected = id;
+    if(this.selected != null && AIRPLANES.data.hasOwnProperty(this.selected)){
+        AIRPLANES.data[this.selected].airplane.traverse((child) => {
+            if(child.isMesh){
+                child.material.color.setHex(0xffffff);
+            }
+        });
+    }
+}.bind(AIRPLANES);
 
