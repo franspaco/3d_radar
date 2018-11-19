@@ -11,7 +11,7 @@ var APP = {
         max_trail_length: 600,
     }
 }
-console.log(APP);
+
 APP.setup = async function () {
     this.tag = $("#tag");
     this.canvas = document.getElementById("webglcanvas");
@@ -177,7 +177,7 @@ APP.onMouseMove = function(event) {
     if(showTag){
         this.tag.removeClass('hidden');
         this.tag.css({
-            top:  event.clientY-20 + 'px',
+            top:  event.clientY-30 + 'px',
             left: event.clientX + 'px'
         });
     }
@@ -193,6 +193,7 @@ APP.onMouseClick = function(event) {
         this.table.$('tr.selected').removeClass('selected');
         this.table.$(AIRPLANES.data[this.selected_aircraft].node).addClass('selected');
         AIRPLANES.setSelected(this.selected_aircraft);
+        console.log(AIRPLANES.data[this.selected_aircraft].info);
     }
     else{
         // this.table.search('').draw();
