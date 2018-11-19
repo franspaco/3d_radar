@@ -18,7 +18,7 @@ var AIRPLANES = {
     // Store airplane data
     data: {}, 
     // API route
-    apiRoute : "https://franspaco.azurewebsites.net/airplanes",
+    apiRoute: "https://franspaco.azurewebsites.net/api/plane-json",
     rate: 3000, // miliseconds
     // Airplane Object, later copied
     mainAirplane : null,
@@ -54,9 +54,9 @@ AIRPLANES.setup = async function(){
 
     AIRPLANES.updateData();
 
-    setInterval(()=>{
-        AIRPLANES.updateData();
-    }, this.rate);
+    // setInterval(()=>{
+    //     AIRPLANES.updateData();
+    // }, this.rate);
 }
 
 // Clone model for each new aircraft
@@ -135,6 +135,7 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         }
         // Create trail object
         var trail = new THREE.Line(geometry, material);
+        trail.frustumCulled = false;
 
         // set object name to id
         airplane.name = airplaneId;
@@ -174,6 +175,8 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         // Tell the renderer it needs to update the geometry
         AIRPLANES.data[airplaneId].trail.geometry.setDrawRange( 0, ++AIRPLANES.data[airplaneId].trailLength );
         AIRPLANES.data[airplaneId].trail.geometry.attributes.position.needsUpdate = true;
+        // Apparently this makes lines not dissappear
+        // AIRPLANES.data[airplaneId].trail.geometry.computeBoundingSphere();
     }
 }
 
@@ -229,15 +232,36 @@ AIRPLANES.remove_old = function(){
 }
 
 // Retrieves airplane data from the server
-AIRPLANES.updateData = function(){
-    $.getJSON(this.apiRoute,(data)=>{
-        data.acList.forEach(airplaneInfo => {
-            this.updateAirplaneData(airplaneInfo);
+AIRPLANES.updateData = async function(){
+    var before = Date.now();
+    await new Promise((resolve, reject) => {
+        $.ajax({
+            url: this.apiRoute,
+            timeout: 3500,
+            success: (data) => {
+                data.acList.forEach(airplaneInfo => {
+                    this.updateAirplaneData(airplaneInfo);
+                });
+                resolve();
+            },
+            error: ( jqXHR, textStatus, errorThrown ) => {
+                console.log(textStatus);
+                resolve();
+            }
         });
     });
+
     // Deal with old airplanes
     this.remove_old();
-}
+
+    // Calculate timeout to call update on a 3 second period
+    var time_out = this.rate - (Date.now() - before);
+
+    // Call function after a timeout
+    setTimeout( () => {
+        this.updateData()
+    }, (time_out > 0) ? time_out : 0)
+}.bind(AIRPLANES);
 
 // Set the selected airplane
 // Clears previous selected and colors the new one
