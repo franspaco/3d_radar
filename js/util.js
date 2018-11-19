@@ -27,3 +27,14 @@ function get_route(from, to){
         return '';
     }
 }
+
+function make_table_data(airplaneInfo){
+    return [
+        airplaneInfo.Id,
+        default_value(airplaneInfo.Icao),
+        default_value(airplaneInfo.Call),
+        default_value(airplaneInfo.Reg),
+        default_value(airplaneInfo.Type),
+        get_route(airplaneInfo.From, airplaneInfo.To)
+    ]
+}
