@@ -18,8 +18,7 @@ var AIRPLANES = {
     // Store airplane data
     data: {}, 
     // API route
-    // apiRoute : "https://franspaco.azurewebsites.net/airplanes", 
-    apiRoute: "http://192.168.0.10/VirtualRadar/AircraftList.json",
+    apiRoute : "https://franspaco.azurewebsites.net/airplanes",
     rate: 3000, // miliseconds
     // Airplane Object, later copied
     mainAirplane : null,
