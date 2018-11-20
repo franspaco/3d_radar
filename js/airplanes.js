@@ -24,6 +24,8 @@ var AIRPLANES = {
     mainAirplane : null,
     mainHeli : null,
     selected: null,
+    hid_time: 1.5, // minutes
+    delete_time: 5, //minutes
 };
 
 
@@ -208,7 +210,7 @@ AIRPLANES.remove_old = function(){
     for (const airplaneId in AIRPLANES.data) {
         if (AIRPLANES.data.hasOwnProperty(airplaneId)) {
             // Check if alive and we haven't received anything in the last 1.5 minutes
-            if(AIRPLANES.data[airplaneId].status === 'alive' && !this.checkAlive(airplaneId, now, 1.5)) {
+            if(AIRPLANES.data[airplaneId].status === 'alive' && !this.checkAlive(airplaneId, now, this.hid_time)) {
                 console.log('Hiding: ' + airplaneId);
                     // Remove the airplane model
                     APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
@@ -219,7 +221,7 @@ AIRPLANES.remove_old = function(){
                     APP.table.row(AIRPLANES.data[airplaneId].node).remove().draw();
             }
             // Check if removed and we haven't received anything in the last 5 minutes
-            else if(AIRPLANES.data[airplaneId].status === 'removed' && !this.checkAlive(airplaneId, now, 5)){
+            else if(AIRPLANES.data[airplaneId].status === 'removed' && !this.checkAlive(airplaneId, now, this.delete_time)){
                 // If we haven't seen it in >5 minutes delete all data
                 console.log('Erasing: ' + AIRPLANES.data[airplaneId].info.Icao);
                 // Remove the trail
