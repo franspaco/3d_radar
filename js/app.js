@@ -180,6 +180,9 @@ APP.onMouseMove = function(event) {
     var showTag = false;
     for (const key in AIRPLANES.data) {
         if (AIRPLANES.data.hasOwnProperty(key)) {
+            if(AIRPLANES.data[key].status !== 'alive'){
+                continue;
+            }
             var intersects = this.raycaster.intersectObject(AIRPLANES.data[key].airplane, true);
             if(intersects.length > 0){
                 this.selected_aircraft = key;
