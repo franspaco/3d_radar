@@ -1,5 +1,5 @@
 var request = require("request");
-
+var url = "http://www.airport-data.com/api/ac_thumb.json?m=" + "400A0B";
 request(
     {
         method: "GET",

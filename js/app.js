@@ -87,7 +87,30 @@ APP.setup = async function () {
             AIRPLANES.setSelected(id);
         }
     });
+
+    this.panel = {
+        panel:    $("#panel"),
+        icao:     $("#l-icao"),
+        callsign: $("#l-call"),
+        op:       $("#l-op"),
+        model:    $("#l-type"),
+        altitude: $("#l-alt"),
+        speed:    $("#l-spd"),
+        from:     $("#l-from"),
+        to:       $("#l-to"),
+        img:      $("#l-img"),
+        imglink:  $("#l-imglink"),
+    }
 }
+
+APP.show_panel = function(value){
+    if(value){
+        this.panel.panel.removeClass('hidden');
+    }
+    else{
+        this.panel.panel.addClass('hidden');
+    }
+}.bind(APP);
 
 APP.tick = function(){
     window.requestAnimationFrame(this.tick);
@@ -104,9 +127,6 @@ APP.tick = function(){
 APP.createMaterials = async function(){
     this.materials = {};
     this.materials['background'] = new THREE.MeshBasicMaterial({color: 0x032602, side: THREE.DoubleSide});
-    this.materials.line = new THREE.LineBasicMaterial({color:0xffff00});
-    this.materials.line_from = new THREE.LineBasicMaterial({color:0x00ff00});
-    this.materials.line_to = new THREE.LineBasicMaterial({color:0x00ffff});
 }
 
 APP.createObjects = async function(){
@@ -172,6 +192,7 @@ APP.onMouseMove = function(event) {
                 showTag = true;
                 break;
             }
+            // Note: I did try to check intersections with lines, it yields weird results so I don't recommend trying again.
         }
     }
     if(showTag){

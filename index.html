@@ -36,7 +36,7 @@
         </div>
         <div id="list">
             <h3>Live aircraft:</h3>
-            <table id="data" class="compact">
+            <table id="data" class="compact stripe hover order-column cell-border">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -52,14 +52,52 @@
                 </tbody>
             </table>
             <div id="table-footer">
-                <h3>Legend:</h3>
-                <p>
-                    <div class="mini-box" style="background-color: #00ffff;"> </div> Arrivals <br/>
-                    <div class="mini-box" style="background-color: #00ff00;"> </div> Departures <br/>
-                    <div class="mini-box" style="background-color: #ffff00;"> </div> Other <br/>
-                </p>
+                <div id="panel" class="hidden">
+                    <h3>Airplane data:</h3>
+                    <div class="flexcontainer">
+                        <div class="data-box">
+                            <div class="ht">ICAO:</div>
+                            <div id="l-icao"></div>
+                        </div>
+                        <div class="data-box">
+                            <div class="ht">Callsign:</div>
+                            <div id="l-call"></div>
+                        </div>
+                        <div class="data-box">
+                            <div class="ht">Operator:</div>
+                            <div id="l-op"></div>
+                        </div>
+                        <div class="data-box">
+                            <div class="ht">Model:</div>
+                            <div id="l-type"></div>
+                        </div>
+                        <div class="data-box">
+                            <div class="ht">Altitude:</div>
+                            <div id="l-alt"></div>
+                        </div>
+                        <div class="data-box">
+                            <div class="ht">Speed:</div>
+                            <div id="l-spd"></div>
+                        </div>
+                    </div>
+                    <div id="l-from"></div>
+                    <div id="l-to"></div>
+                    <a href="" target="_blank" id="l-imglink">
+                        <img src="" alt="" id="l-img">
+                    </a>
+                </div>
             </div>
         </div>
+    </div>
+    <div id="legend">
+        <h3>Legend:</h3>
+        <p>
+            <div class="mini-box" id="c-selected"> </div> Selected <br/>
+            <div class="mini-box" id="c-arrivals"> </div> Arrivals <br/>
+            <div class="mini-box" id="c-departures"> </div> Departures <br/>
+            <div class="mini-box" id="c-other"> </div> Other <br/>
+            <div class="mini-box" id="c-unknown"> </div> Unknown <br/>
+        </p>
     </div>
     <script type="text/javascript">
         $(document).ready(() => {

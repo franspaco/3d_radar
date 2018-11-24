@@ -19,6 +19,7 @@ var AIRPLANES = {
     data: {}, 
     // API route
     apiRoute: "https://franspaco.azurewebsites.net/api/plane-json",
+    imgApiRoute: "https://franspaco.azurewebsites.net/api/plane-pictures?m=",
     rate: 3000, // miliseconds
     // Airplane Object, later copied
     mainAirplane : null,
@@ -26,11 +27,28 @@ var AIRPLANES = {
     selected: null,
     hid_time: 1.5, // minutes
     delete_time: 5, //minutes
+    airplane_colors: {
+        default: 0xff0000,
+        selected: 0xffffff,
+    },
+    trail_colors: {
+        selected:   new THREE.Color(0xffffff),
+        arrivals:   new THREE.Color(0x00d0ff),
+        departures: new THREE.Color(0x88ff00),
+        unknown:    new THREE.Color(0xff00c3),
+        other:      new THREE.Color(0xff8800),
+    },
 };
 
 
 
 AIRPLANES.setup = async function(){
+    $('#c-selected').css({'background-color': '#'+this.trail_colors.selected.getHexString()});
+    $('#c-arrivals').css({'background-color': '#'+this.trail_colors.arrivals.getHexString()});
+    $('#c-departures').css({'background-color': '#'+this.trail_colors.departures.getHexString()});
+    $('#c-other').css({'background-color': '#'+this.trail_colors.other.getHexString()});
+    $('#c-unknown').css({'background-color': '#'+this.trail_colors.unknown.getHexString()});
+
     var loader = new THREE.FBXLoader();
 
     // Base Airplane Model
@@ -40,7 +58,7 @@ AIRPLANES.setup = async function(){
     AIRPLANES.mainAirplane.traverse((child) =>{
         if(child.isMesh){
             child.material.transparent = false;
-            child.material.color.setHex(0xff0000);
+            child.material.color.setHex(AIRPLANES.airplane_colors.default);
             child.material.map = texture_787;
         }
     });
@@ -50,7 +68,7 @@ AIRPLANES.setup = async function(){
     AIRPLANES.mainHeli.traverse((child) =>{
         if(child.isMesh){
             child.material.transparent = false;
-            child.material.color.setHex(0xff0000);
+            child.material.color.setHex(AIRPLANES.airplane_colors.default);
         }
     });
 
@@ -75,6 +93,20 @@ AIRPLANES.getNew = function(species = 1){
 // Returns whether aircraft is in the local cache
 AIRPLANES.previouslySeen = function(airplaneId){
     return (airplaneId in AIRPLANES.data);
+}
+
+AIRPLANES.get_trail_color = function(airplaneInfo){
+    var trail_color = AIRPLANES.trail_colors.unknown;
+    if(airplaneInfo.To && airplaneInfo.To.startsWith("MMMX")){
+        trail_color = AIRPLANES.trail_colors.arrivals;
+    }
+    else if(airplaneInfo.From && airplaneInfo.From.startsWith("MMMX")){
+        trail_color = AIRPLANES.trail_colors.departures;
+    }
+    else if(airplaneInfo.To || airplaneInfo.From){
+        trail_color = AIRPLANES.trail_colors.other;
+    }
+    return trail_color;
 }
 
 AIRPLANES.updateAirplaneData = function(airplaneInfo){
@@ -116,6 +148,14 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
             if(update){
                 row.data(new_data).draw();
             }
+            // Check if we have new route data
+            if(AIRPLANES.data[airplaneId].route === ''){
+                if(airplaneInfo.To && airplaneInfo.From){
+                    AIRPLANES.data[airplaneId].route = get_route(airplaneInfo.From, airplaneInfo.To);
+                    AIRPLANES.data[airplaneId].trail_color = this.get_trail_color(airplaneInfo);
+                    AIRPLANES.data[airplaneId].trail.material.color = AIRPLANES.data[airplaneId].trail_color;
+                }
+            }
         }
     }
     else{
@@ -128,15 +168,11 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
         geometry.setDrawRange( 0, 0 );
         // Decide what material to use for trail, depends on route
-        var material = APP.materials.line;
-        if(airplaneInfo.To && airplaneInfo.To.startsWith("MMMX")){
-            material = APP.materials.line_to;
-        }
-        else if(airplaneInfo.From && airplaneInfo.From.startsWith("MMMX")){
-            material = APP.materials.line_from;
-        }
+        var trail_color = this.get_trail_color(airplaneInfo);
+        var material = new THREE.LineBasicMaterial({color: trail_color});
         // Create trail object
         var trail = new THREE.Line(geometry, material);
+        // This makes lines not dissappear
         trail.frustumCulled = false;
 
         // set object name to id
@@ -148,7 +184,9 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
             lastseen: new Date(),
             trail: trail,
             trailLength: 0,
-            status: 'alive'
+            status: 'alive',
+            trail_color: trail_color,
+            route: get_route(airplaneInfo),
         };
         // Add aircraft and trail to scene
         APP.scene.add(airplane);
@@ -160,7 +198,7 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
     // If we have sufficient location information update the model's location
     if(airplaneInfo['Long'] && airplaneInfo['Lat'] && airplaneInfo['Alt']){
         // Translate IRL position to scene position
-        var coordinates = this.transformCoordinates(airplaneInfo['Long'], airplaneInfo['Lat'], airplaneInfo['Alt']);
+        var coordinates = this.transformCoordinates(airplaneInfo['Long'], airplaneInfo['Lat'], airplaneInfo['GAlt']);
 
         // Set the aircraft object's position & rotation
         AIRPLANES.data[airplaneId]['airplane'].position.x = coordinates.x;
@@ -177,8 +215,6 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         // Tell the renderer it needs to update the geometry
         AIRPLANES.data[airplaneId].trail.geometry.setDrawRange( 0, ++AIRPLANES.data[airplaneId].trailLength );
         AIRPLANES.data[airplaneId].trail.geometry.attributes.position.needsUpdate = true;
-        // Apparently this makes lines not dissappear
-        // AIRPLANES.data[airplaneId].trail.geometry.computeBoundingSphere();
     }
 }
 
@@ -193,13 +229,30 @@ AIRPLANES.transformCoordinates = function(long, lat, alt){
         x: this.mapDomain(long, APP.constants.range_long.a, APP.constants.range_long.b, APP.constants.range_map.b, APP.constants.range_map.a), 
         z: this.mapDomain(lat, APP.constants.range_lat.a, APP.constants.range_lat.b, APP.constants.range_map.b, APP.constants.range_map.a),
         // Feet to Km by the scaling factor for the height
-        y: alt * 0.0003048 * APP.constants.height_scaling + 0.1
+        y: alt * 0.0003048 * APP.constants.height_scaling
     };   
 }
 
 // Checks if an airplane's last update is within mins_limit of a given timestamp
 AIRPLANES.checkAlive = function(airplaneId, timestamp, mins_limit){
     return !((timestamp - AIRPLANES.data[airplaneId]['lastseen'])/60000 > mins_limit);
+}
+
+AIRPLANES.query = function(value = null, max_age=Infinity){
+    var now = new Date();
+    var out = [];
+    // Iterate over all the planes in the cache
+    for (const airplaneId in AIRPLANES.data) {
+        if (AIRPLANES.data.hasOwnProperty(airplaneId)) {
+            const airplane = AIRPLANES.data[airplaneId];
+            if(value === null || airplane.status === value){
+                if(this.checkAlive(airplaneId, now, max_age)){
+                    out.push(airplane);
+                }
+            }
+        }
+    }
+    return out;
 }
 
 // Deals with old airplanes
@@ -273,17 +326,53 @@ AIRPLANES.setSelected = function(id){
     if(this.selected != null && AIRPLANES.data.hasOwnProperty(this.selected)){
         AIRPLANES.data[this.selected].airplane.traverse((child) => {
             if(child.isMesh){
-                child.material.color.setHex(0xff0000);
+                child.material.color.setHex(AIRPLANES.airplane_colors.default);
             }
         });
+        AIRPLANES.data[this.selected].trail.material.color = AIRPLANES.data[this.selected].trail_color;
     }
     this.selected = id;
     if(this.selected != null && AIRPLANES.data.hasOwnProperty(this.selected)){
         AIRPLANES.data[this.selected].airplane.traverse((child) => {
             if(child.isMesh){
-                child.material.color.setHex(0xffffff);
+                child.material.color.setHex(AIRPLANES.airplane_colors.selected);
+            }
+        });
+        AIRPLANES.data[this.selected].trail.material.color = AIRPLANES.trail_colors.selected;
+    }
+    this.display_selected_data(id);
+}.bind(AIRPLANES);
+
+AIRPLANES.display_selected_data = function(id){
+    if(id != null && AIRPLANES.data.hasOwnProperty(id)){
+        const data = AIRPLANES.data[id].info;
+        APP.panel.icao.text(data.Icao);
+        APP.panel.callsign.text(data.Call);
+        APP.panel.op.text(data.Op);
+        APP.panel.model.text(data.Mdl);
+        APP.panel.altitude.text(data.GAlt + ' ft');
+        APP.panel.speed.text(default_value(data.Spd) + ' knots');
+        APP.panel.from.text(default_value(data.From));
+        APP.panel.to.text(default_value(data.To));
+        APP.show_panel(true);
+        $.getJSON(this.imgApiRoute + data.Icao, (data) => {
+            console.log(data);
+            if(data.status === 200 && data.data){
+                APP.panel.img.attr('src', data.data[0].image);
+                APP.panel.img.attr('alt', 'Copyright © ' + data.data[0].photographer);
+                APP.panel.img.attr('title', 'Copyright © ' + data.data[0].photographer);
+                APP.panel.imglink.attr('href', data.data[0].link);
+            }
+            else {
+                APP.panel.img.attr('src', '');
+                APP.panel.img.attr('alt', '');
+                APP.panel.img.attr('title', '');
+                APP.panel.imglink.attr('href', '');
             }
         });
     }
-}.bind(AIRPLANES);
+    else {
+        APP.show_panel(false);
+    }
+}
 
