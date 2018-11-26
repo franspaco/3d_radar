@@ -85,3 +85,15 @@ body {
     height: 30px;
 }
 
+#resize_button {
+    font-size: 0.7em;
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#compass_rose {
+    position: absolute;
+    top: 15px;
+    left: 30px;
+}

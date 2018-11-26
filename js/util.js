@@ -9,6 +9,10 @@ function deg2rad(val) {
     return (val / 180.0) * Math.PI;
 }
 
+function rad2deg(val) {
+    return (val / Math.PI) * 180;
+}
+
 async function loadJsonAsync(url) {
     return new Promise( (resolve) => {
         $.getJSON(url, resolve);
@@ -35,6 +39,11 @@ function make_table_data(airplaneInfo){
         default_value(airplaneInfo.Call),
         default_value(airplaneInfo.Reg),
         default_value(airplaneInfo.Type),
-        get_route(airplaneInfo.From, airplaneInfo.To)
+        get_route(airplaneInfo.From, airplaneInfo.To),
+        (airplaneInfo.Lat === undefined) ? "No": "Yes",
     ]
+}
+
+function nround(val){
+    return Math.round(val*1000) / 1000;
 }

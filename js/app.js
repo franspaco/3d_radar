@@ -15,9 +15,9 @@ var APP = {
 APP.setup = async function () {
     this.tag = $("#tag");
     this.canvas = document.getElementById("webglcanvas");
-    var container = $("#container");
-    this.canvas.width = container.width();
-    this.canvas.height = container.height();
+    this.container = $("#container");
+    this.canvas.width = this.container.width();
+    this.canvas.height = this.container.height();
     this.canvas_bounds = this.canvas.getBoundingClientRect();
 
     // Create the Three.js renderer and attach it to our canvas
@@ -46,6 +46,7 @@ APP.setup = async function () {
     );
     this.controls = new THREE.OrbitControls(this.camera, this.canvas);
     this.controls.maxPolarAngle = Math.PI/2-0.1;
+    this.controls.target.y = 3;
     this.camera.position.set(0, 10, 10);
     this.controls.update();
     this.scene.add(this.camera);
@@ -101,8 +102,25 @@ APP.setup = async function () {
         img:      $("#l-img"),
         imglink:  $("#l-imglink"),
     }
+
+    // Handle resize
+    window.addEventListener('resize', () => {APP.adjust_viewport()});
+
+    // Compass rose
+    this.rose = $("#compass_rose");
 }
 
+APP.adjust_viewport = function(){
+    console.log('Resize');
+    this.canvas.width = this.container.width();
+    this.canvas.height = this.container.height();
+    this.canvas_bounds = this.canvas.getBoundingClientRect();
+    this.camera.aspect = this.canvas.width / this.canvas.height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize( this.canvas.width, this.canvas.height );
+}.bind(APP);
+
+// Shows or hides the details panel
 APP.show_panel = function(value){
     if(value){
         this.panel.panel.removeClass('hidden');
@@ -112,6 +130,7 @@ APP.show_panel = function(value){
     }
 }.bind(APP);
 
+// Main rendering frunction
 APP.tick = function(){
     window.requestAnimationFrame(this.tick);
     var now = Date.now();
@@ -158,6 +177,7 @@ APP.createObjects = async function(){
 }
 
 APP.update = function(delta){
+    // Interpolate aircraft locations
     for (const airplaneId in AIRPLANES.data) {
         if (AIRPLANES.data.hasOwnProperty(airplaneId)){
             var airplane = AIRPLANES.data[airplaneId].airplane;
@@ -169,6 +189,10 @@ APP.update = function(delta){
             airplane.position.y += vspd/60*0.0003048*APP.constants.height_scaling*delta/1000;
         }
     }
+
+    // Rotate compass rose
+    var angle = this.controls.getAzimuthalAngle();
+    this.rose.css('transform', 'rotate(' + angle + 'rad)');
 }
 
 

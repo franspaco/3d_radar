@@ -149,12 +149,17 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
                 row.data(new_data).draw();
             }
             // Check if we have new route data
-            if(AIRPLANES.data[airplaneId].route === ''){
+            if(this.data[airplaneId].route === ''){
                 if(airplaneInfo.To && airplaneInfo.From){
-                    AIRPLANES.data[airplaneId].route = get_route(airplaneInfo.From, airplaneInfo.To);
-                    AIRPLANES.data[airplaneId].trail_color = this.get_trail_color(airplaneInfo);
-                    AIRPLANES.data[airplaneId].trail.material.color = AIRPLANES.data[airplaneId].trail_color;
+                    this.data[airplaneId].route = get_route(airplaneInfo.From, airplaneInfo.To);
+                    this.data[airplaneId].trail_color = this.get_trail_color(airplaneInfo);
+                    this.data[airplaneId].trail.material.color = AIRPLANES.data[airplaneId].trail_color;
                 }
+            }
+
+            // If airplane is selected update data panel
+            if(this.selected !== null && this.selected == airplaneId){
+                this.update_selected_data(airplaneInfo);
             }
         }
     }
@@ -178,7 +183,7 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         // set object name to id
         airplane.name = airplaneId;
         // Create aircraft record
-        AIRPLANES.data[airplaneId] = {
+        this.data[airplaneId] = {
             info : airplaneInfo,
             airplane: airplane,
             lastseen: new Date(),
@@ -192,7 +197,7 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         APP.scene.add(airplane);
         APP.scene.add(trail);
         // Add aircraft to table
-        AIRPLANES.data[airplaneId].node = APP.table.row.add(make_table_data(airplaneInfo)).draw(false).node();
+        this.data[airplaneId].node = APP.table.row.add(make_table_data(airplaneInfo)).draw(false).node();
     }
     
     // If we have sufficient location information update the model's location
@@ -201,10 +206,10 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         var coordinates = this.transformCoordinates(airplaneInfo['Long'], airplaneInfo['Lat'], airplaneInfo['GAlt']);
 
         // Set the aircraft object's position & rotation
-        AIRPLANES.data[airplaneId]['airplane'].position.x = coordinates.x;
-        AIRPLANES.data[airplaneId]['airplane'].position.z = coordinates.z;
-        AIRPLANES.data[airplaneId]['airplane'].position.y = coordinates.y;
-        AIRPLANES.data[airplaneId]['airplane'].rotation.y = deg2rad( 180 - airplaneInfo['Trak']);
+        this.data[airplaneId].airplane.position.x = coordinates.x;
+        this.data[airplaneId].airplane.position.z = coordinates.z;
+        this.data[airplaneId].airplane.position.y = coordinates.y;
+        this.data[airplaneId].airplane.rotation.y = deg2rad( 180 - airplaneInfo['Trak']);
 
         // Add new points to trail array
         var positions = AIRPLANES.data[airplaneId].trail.geometry.attributes.position.array;
@@ -213,8 +218,8 @@ AIRPLANES.updateAirplaneData = function(airplaneInfo){
         positions[3 * indx + 1] = coordinates.y;
         positions[3 * indx + 2] = coordinates.z;
         // Tell the renderer it needs to update the geometry
-        AIRPLANES.data[airplaneId].trail.geometry.setDrawRange( 0, ++AIRPLANES.data[airplaneId].trailLength );
-        AIRPLANES.data[airplaneId].trail.geometry.attributes.position.needsUpdate = true;
+        this.data[airplaneId].trail.geometry.setDrawRange( 0, ++AIRPLANES.data[airplaneId].trailLength );
+        this.data[airplaneId].trail.geometry.attributes.position.needsUpdate = true;
     }
 }
 
@@ -260,27 +265,27 @@ AIRPLANES.remove_old = function(){
     // Get current timestamp
     var now = new Date();
     // Iterate over all the planes in the cache
-    for (const airplaneId in AIRPLANES.data) {
-        if (AIRPLANES.data.hasOwnProperty(airplaneId)) {
+    for (const airplaneId in this.data) {
+        if (this.data.hasOwnProperty(airplaneId)) {
             // Check if alive and we haven't received anything in the last 1.5 minutes
-            if(AIRPLANES.data[airplaneId].status === 'alive' && !this.checkAlive(airplaneId, now, this.hid_time)) {
+            if(this.data[airplaneId].status === 'alive' && !this.checkAlive(airplaneId, now, this.hid_time)) {
                 console.log('Hiding: ' + airplaneId);
                     // Remove the airplane model
-                    APP.scene.remove(AIRPLANES.data[airplaneId].airplane);
+                    APP.scene.remove(this.data[airplaneId].airplane);
                     // Trail is left in the scene until permanent removal
                     // Set status to removed
-                    AIRPLANES.data[airplaneId].status = 'removed';
+                    this.data[airplaneId].status = 'removed';
                     // Remove airplane from table
-                    APP.table.row(AIRPLANES.data[airplaneId].node).remove().draw();
+                    APP.table.row(this.data[airplaneId].node).remove().draw();
             }
             // Check if removed and we haven't received anything in the last 5 minutes
-            else if(AIRPLANES.data[airplaneId].status === 'removed' && !this.checkAlive(airplaneId, now, this.delete_time)){
+            else if(this.data[airplaneId].status === 'removed' && !this.checkAlive(airplaneId, now, this.delete_time)){
                 // If we haven't seen it in >5 minutes delete all data
-                console.log('Erasing: ' + AIRPLANES.data[airplaneId].info.Icao);
+                console.log('Erasing: ' + this.data[airplaneId].info.Icao);
                 // Remove the trail
-                APP.scene.remove(AIRPLANES.data[airplaneId].trail);
+                APP.scene.remove(this.data[airplaneId].trail);
                 // Delete all remaining data
-                delete AIRPLANES.data[airplaneId];
+                delete this.data[airplaneId];
             }
         }
     }
@@ -323,37 +328,30 @@ AIRPLANES.updateData = async function(){
 // Only clears if null
 AIRPLANES.setSelected = function(id){
     console.log('Selected: ' + id);
-    if(this.selected != null && AIRPLANES.data.hasOwnProperty(this.selected)){
-        AIRPLANES.data[this.selected].airplane.traverse((child) => {
+    if(this.selected != null && this.data.hasOwnProperty(this.selected)){
+        this.data[this.selected].airplane.traverse((child) => {
             if(child.isMesh){
-                child.material.color.setHex(AIRPLANES.airplane_colors.default);
+                child.material.color.setHex(this.airplane_colors.default);
             }
         });
-        AIRPLANES.data[this.selected].trail.material.color = AIRPLANES.data[this.selected].trail_color;
+        this.data[this.selected].trail.material.color = this.data[this.selected].trail_color;
     }
     this.selected = id;
-    if(this.selected != null && AIRPLANES.data.hasOwnProperty(this.selected)){
-        AIRPLANES.data[this.selected].airplane.traverse((child) => {
+    if(this.selected != null && this.data.hasOwnProperty(this.selected)){
+        this.data[this.selected].airplane.traverse((child) => {
             if(child.isMesh){
-                child.material.color.setHex(AIRPLANES.airplane_colors.selected);
+                child.material.color.setHex(this.airplane_colors.selected);
             }
         });
-        AIRPLANES.data[this.selected].trail.material.color = AIRPLANES.trail_colors.selected;
+        this.data[this.selected].trail.material.color = this.trail_colors.selected;
     }
     this.display_selected_data(id);
 }.bind(AIRPLANES);
 
 AIRPLANES.display_selected_data = function(id){
-    if(id != null && AIRPLANES.data.hasOwnProperty(id)){
-        const data = AIRPLANES.data[id].info;
-        APP.panel.icao.text(data.Icao);
-        APP.panel.callsign.text(data.Call);
-        APP.panel.op.text(data.Op);
-        APP.panel.model.text(data.Mdl);
-        APP.panel.altitude.text(data.GAlt + ' ft');
-        APP.panel.speed.text(default_value(data.Spd) + ' knots');
-        APP.panel.from.text(default_value(data.From));
-        APP.panel.to.text(default_value(data.To));
+    if(id != null && this.data.hasOwnProperty(id)){
+        const data = this.data[id].info;
+        this.update_selected_data(data);
         APP.show_panel(true);
         $.getJSON(this.imgApiRoute + data.Icao, (data) => {
             console.log(data);
@@ -373,6 +371,23 @@ AIRPLANES.display_selected_data = function(id){
     }
     else {
         APP.show_panel(false);
+    }
+}
+
+AIRPLANES.update_selected_data = function(data){
+    APP.panel.icao.text(default_value(data.Icao));
+    APP.panel.callsign.text(default_value(data.Call));
+    APP.panel.op.text(default_value(data.Op));
+    APP.panel.model.text(default_value(data.Mdl));
+    APP.panel.speed.text(default_value(data.Spd) + ' knots');
+    APP.panel.from.text(default_value(data.From));
+    APP.panel.to.text(default_value(data.To));
+
+    if(data.GAlt > 18000) {
+        APP.panel.altitude.text('FL' + Math.round(data.GAlt/100));
+    }
+    else {
+        APP.panel.altitude.text(data.GAlt + ' ft');
     }
 }
 
