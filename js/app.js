@@ -2,8 +2,8 @@
 
 var APP = {
     constants: {
-        range_long : {a: -100.546875, b: -97.55859375},
-        range_lat : {a: 20.79720143430699, b: 17.97873309555617},
+        range_long : {a: 115712, b: 120064},
+        range_lat : {a: 231168, b: 235520},
         range_map : {a: 85, b: -85},
         // height_scaling: 10/18, // Real
         height_scaling: 1.3,

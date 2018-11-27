@@ -38,9 +38,11 @@ var AIRPLANES = {
         unknown:    new THREE.Color(0xff00c3),
         other:      new THREE.Color(0xff8800),
     },
+    // Library used for mercator projection shenanigans
+    merc: new SphericalMercator({
+        size: 256
+    }),
 };
-
-
 
 AIRPLANES.setup = async function(){
     $('#c-selected').css({'background-color': '#'+this.trail_colors.selected.getHexString()});
@@ -230,9 +232,10 @@ AIRPLANES.mapDomain = function(value, Imax, Imin, Omax, Omin){
 
 // Transform IRL coordinates into scene coordinates
 AIRPLANES.transformCoordinates = function(long, lat, alt){
+    var xy = this.merc.px([long, lat], 11);
     return {
-        x: this.mapDomain(long, APP.constants.range_long.a, APP.constants.range_long.b, APP.constants.range_map.b, APP.constants.range_map.a), 
-        z: this.mapDomain(lat, APP.constants.range_lat.a, APP.constants.range_lat.b, APP.constants.range_map.b, APP.constants.range_map.a),
+        x: this.mapDomain(xy[0], APP.constants.range_long.a, APP.constants.range_long.b, APP.constants.range_map.b, APP.constants.range_map.a), 
+        z: this.mapDomain(xy[1], APP.constants.range_lat.a, APP.constants.range_lat.b, APP.constants.range_map.b, APP.constants.range_map.a),
         // Feet to Km by the scaling factor for the height
         y: alt * 0.0003048 * APP.constants.height_scaling
     };   
