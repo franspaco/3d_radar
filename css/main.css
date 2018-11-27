@@ -50,6 +50,11 @@ body {
     font-size: 0.8em;
 }
 
+#list > h3, #panel > h3 {
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
 #legend {
     position: absolute;
     left: 0;
