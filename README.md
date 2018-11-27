@@ -1,18 +1,5 @@
 # computer-graphics-final
 
-[VIEW LIVE](https://javicuriel.github.io/computer-graphics-final/)
+[VIEW LIVE](https://franspaco.github.io/3d_radar/)
 
-
-To start app:
-1. Install request module for Node
-```
-$ npm install request --save
-```
-2. Run server
-```
-$ node server.js
-```
-3. Access app through browser
-```
-http://localhost:9000/index.html
-```
+3D Live aircraft radar that uses data from a Virtual Radar Server instance.
