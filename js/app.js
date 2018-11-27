@@ -65,7 +65,7 @@ APP.setup = async function () {
 
     // Set up data table
     this.table = $("#data").DataTable({
-        "scrollY":        "50%",
+        "scrollY":        "50vh",
         "scrollCollapse": true,
         "paging":         false,
         "columnDefs": [
