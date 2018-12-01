@@ -41,8 +41,8 @@ APP.setup = async function () {
     this.camera = new THREE.PerspectiveCamera(
         45,
         this.canvas.width / this.canvas.height,
-        1,
-        4000
+        0.01,
+        2000
     );
     this.controls = new THREE.OrbitControls(this.camera, this.canvas);
     this.controls.maxPolarAngle = Math.PI/2-0.1;
