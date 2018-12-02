@@ -27,6 +27,7 @@ var AIRPLANES = {
     selected: null,
     hid_time: 1.5, // minutes
     delete_time: 5, //minutes
+    trail_delete: true, // delete trails after some time
     airplane_colors: {
         default: 0xff0000,
         selected: 0xffffff,
@@ -282,7 +283,7 @@ AIRPLANES.remove_old = function(){
                     APP.table.row(this.data[airplaneId].node).remove().draw();
             }
             // Check if removed and we haven't received anything in the last 5 minutes
-            else if(this.data[airplaneId].status === 'removed' && !this.checkAlive(airplaneId, now, this.delete_time)){
+            else if(this.trail_delete && this.data[airplaneId].status === 'removed' && !this.checkAlive(airplaneId, now, this.delete_time)){
                 // If we haven't seen it in >5 minutes delete all data
                 console.log('Erasing: ' + this.data[airplaneId].info.Icao);
                 // Remove the trail
